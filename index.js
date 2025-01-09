@@ -23,25 +23,26 @@ app.get("/", function (req, res) {
 
 // Your first API endpoint
 app.post("/api/shorturl", function (req, res) {
-  console.log(req.body);
   const url = req.body.url;
-  const dnslookup = dns.lookup(
-    urlParser.parse(url).hostname,
-    async (err, address) => {
+  try {
+    const parsedUrl = new URL(url);
+
+    dns.lookup(parsedUrl.hostname, async (err, address) => {
       if (!address) {
         res.json({ error: "invalid url" });
       } else {
         const urlCount = await urls.countDocuments({});
         const urlDoc = {
           url,
-          short_url: urlCount,
+          short_url: urlCount
         };
         const result = await urls.insertOne(urlDoc);
-        console.log(result);
         res.json({ original_url: url, short_url: urlCount });
       }
-    }
-  );
+    });
+  } catch (err) {
+    res.json({ error: "invalid url" });
+  }
 });
 
 app.get("/api/shorturl/:short_url", async (req, res) => {
